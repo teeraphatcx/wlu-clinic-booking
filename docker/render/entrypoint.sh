@@ -40,7 +40,7 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     done
 fi
 
-if [ "${RUN_SEED:-false}" = "true" ]; then
+if [ "${RUN_SEED:-true}" = "true" ]; then
     if ! php artisan tinker --execute='exit(\App\Models\Admin::query()->exists() ? 0 : 1);'; then
         php artisan db:seed --force
     fi
