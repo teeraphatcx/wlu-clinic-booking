@@ -3,6 +3,19 @@ set -eu
 
 export PORT="${PORT:-10000}"
 
+# Render's generateValue produces a base64-encoded secret without Laravel's
+# required `base64:` prefix. Normalize it before Laravel boots so encrypted
+# sessions and CSRF tokens work on every web request.
+if [ -z "${APP_KEY:-}" ]; then
+    echo "APP_KEY is required in the Render environment." >&2
+    exit 1
+fi
+
+case "$APP_KEY" in
+    base64:*) ;;
+    *) export APP_KEY="base64:$(printf '%s' "$APP_KEY" | php -r 'echo base64_encode(hash("sha256", stream_get_contents(STDIN), true));')" ;;
+esac
+
 envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
 
 mkdir -p \
