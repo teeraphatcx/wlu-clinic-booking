@@ -1,0 +1,105 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: wlu_clinic_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
+    networks:
+      - clinic_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  nginx:
+    image: nginx:alpine
+    container_name: wlu_clinic_nginx
+    restart: unless-stopped
+    ports:
+      - "8008:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - clinic_network
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: wlu_clinic_mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: clinic_booking
+      MYSQL_USER: clinic_user
+      MYSQL_PASSWORD: clinic_password
+      MYSQL_ROOT_PASSWORD: root_password
+      TZ: Asia/Bangkok
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - clinic_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "clinic_user", "-pclinic_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: wlu_clinic_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_password
+      UPLOAD_LIMIT: 64M
+    networks:
+      - clinic_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  redis:
+    image: redis:alpine
+    container_name: wlu_clinic_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - clinic_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  clinic_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local

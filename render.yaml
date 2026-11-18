@@ -1,0 +1,79 @@
+services:
+  - type: web
+    name: wlu-clinic-web
+    runtime: docker
+    region: singapore
+    plan: free
+    dockerfilePath: ./docker/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: ระบบจองคิวคลินิกแพทย์แผนไทย ศูนย์การแพทย์ ม.วลัยลักษณ์
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        fromService:
+          type: web
+          name: wlu-clinic-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: APP_TIMEZONE
+        value: Asia/Bangkok
+      - key: APP_LOCALE
+        value: th
+      - key: APP_FALLBACK_LOCALE
+        value: th
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: wlu-clinic-db
+          property: connectionString
+      - key: REDIS_CLIENT
+        value: phpredis
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: wlu-clinic-cache
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: redis
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: public
+      - key: MAIL_MAILER
+        value: log
+      - key: MAIL_FROM_ADDRESS
+        value: no-reply@wlu-clinic.local
+      - key: MAIL_FROM_NAME
+        value: ระบบจองคิวคลินิกแพทย์แผนไทย
+      - key: RUN_MIGRATIONS
+        value: "true"
+
+  - type: keyvalue
+    name: wlu-clinic-cache
+    region: singapore
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: wlu-clinic-db
+    region: singapore
+    plan: free
+    databaseName: clinic_booking
+    user: clinic_user
