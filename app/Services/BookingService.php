@@ -58,7 +58,9 @@ class BookingService
             }
 
             // Verify slot time hasn't passed.
-            $slot = TimeSlot::findOrFail($timeSlotId);
+            // Lock the slot row before counting bookings. PostgreSQL does not
+            // allow FOR UPDATE on an aggregate COUNT query.
+            $slot = TimeSlot::query()->whereKey($timeSlotId)->lockForUpdate()->firstOrFail();
             if (! $slot->is_active) {
                 throw new InvalidArgumentException('รอบเวลานี้ปิดรับจองแล้ว');
             }
@@ -84,7 +86,6 @@ class BookingService
             $currentBookingsCount = Booking::whereBetween('booking_date', [$bookingDateObject, $bookingDateEnd])
                 ->where('time_slot_id', $timeSlotId)
                 ->whereNotIn('status', [Booking::STATUS_CANCELLED])
-                ->lockForUpdate()
                 ->count();
 
             if ($currentBookingsCount >= $maxBookingsPerSlot) {
@@ -313,7 +314,9 @@ class BookingService
             }
 
             // 3. Verify slot time hasn't passed
-            $slot = TimeSlot::findOrFail($newTimeSlotId);
+            // Lock the slot row before counting bookings. PostgreSQL does not
+            // allow FOR UPDATE on an aggregate COUNT query.
+            $slot = TimeSlot::query()->whereKey($newTimeSlotId)->lockForUpdate()->firstOrFail();
             if (! $slot->is_active) {
                 throw new InvalidArgumentException('รอบเวลานี้ปิดรับจองแล้ว');
             }
@@ -340,7 +343,6 @@ class BookingService
                 ->where('time_slot_id', $newTimeSlotId)
                 ->where('id', '!=', $booking->id)
                 ->whereNotIn('status', [Booking::STATUS_CANCELLED])
-                ->lockForUpdate()
                 ->count();
 
             if ($currentBookingsCount >= $maxBookingsPerSlot) {
