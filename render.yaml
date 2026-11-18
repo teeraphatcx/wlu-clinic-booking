@@ -64,6 +64,8 @@ services:
         value: ระบบจองคิวคลินิกแพทย์แผนไทย
       - key: RUN_MIGRATIONS
         value: "true"
+      - key: RUN_SEED
+        value: "true"
 
   - type: keyvalue
     name: wlu-clinic-cache
