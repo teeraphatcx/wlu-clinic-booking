@@ -25,11 +25,11 @@ class DashboardController extends Controller
                 ->selectRaw('SUM(CASE WHEN booking_date BETWEEN ? AND ? AND status <> ? THEN 1 ELSE 0 END) as today_count', [$todayStart, $todayEnd, Booking::STATUS_CANCELLED])
                 ->selectRaw('SUM(CASE WHEN booking_date BETWEEN ? AND ? THEN 1 ELSE 0 END) as month_count', [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()])
                 ->selectRaw('SUM(CASE WHEN booking_date BETWEEN ? AND ? THEN 1 ELSE 0 END) as year_count', [$today->copy()->startOfYear(), $today->copy()->endOfYear()])
-                ->selectRaw('SUM(status = ?) as pending_count', [Booking::STATUS_PENDING])
-                ->selectRaw('SUM(status = ?) as confirmed_count', [Booking::STATUS_CONFIRMED])
-                ->selectRaw('SUM(status = ?) as cancelled_count', [Booking::STATUS_CANCELLED])
-                ->selectRaw('SUM(status = ?) as completed_count', [Booking::STATUS_COMPLETED])
-                ->selectRaw('SUM(status = ?) as no_show_count', [Booking::STATUS_NO_SHOW])
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending_count', [Booking::STATUS_PENDING])
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as confirmed_count', [Booking::STATUS_CONFIRMED])
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as cancelled_count', [Booking::STATUS_CANCELLED])
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed_count', [Booking::STATUS_COMPLETED])
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as no_show_count', [Booking::STATUS_NO_SHOW])
                 ->first();
 
             return [
@@ -83,9 +83,11 @@ class DashboardController extends Controller
         } elseif ($period === 'monthly') {
             $firstMonth = $today->copy()->startOfMonth()->subMonths(11);
             $lastMonth = $today->copy()->endOfMonth();
-            $monthExpression = DB::connection()->getDriverName() === 'sqlite'
-                ? "strftime('%Y-%m', booking_date)"
-                : "DATE_FORMAT(booking_date, '%Y-%m')";
+            $monthExpression = match (DB::connection()->getDriverName()) {
+                'sqlite' => "strftime('%Y-%m', booking_date)",
+                'pgsql' => "TO_CHAR(booking_date, 'YYYY-MM')",
+                default => "DATE_FORMAT(booking_date, '%Y-%m')",
+            };
             $monthlyCounts = Booking::query()
                 ->whereBetween('booking_date', [$firstMonth, $lastMonth])
                 ->selectRaw("{$monthExpression} as period, COUNT(*) as count")
@@ -99,9 +101,11 @@ class DashboardController extends Controller
             }
         } else {
             $firstYear = $today->year - 4;
-            $yearExpression = DB::connection()->getDriverName() === 'sqlite'
-                ? "strftime('%Y', booking_date)"
-                : 'YEAR(booking_date)';
+            $yearExpression = match (DB::connection()->getDriverName()) {
+                'sqlite' => "strftime('%Y', booking_date)",
+                'pgsql' => 'CAST(EXTRACT(YEAR FROM booking_date) AS INTEGER)',
+                default => 'YEAR(booking_date)',
+            };
             $yearlyCounts = Booking::query()
                 ->whereBetween('booking_date', [$today->copy()->setYear($firstYear)->startOfYear(), $today->copy()->endOfYear()])
                 ->selectRaw("{$yearExpression} as period, COUNT(*) as count")

@@ -100,6 +100,16 @@ class AdminPermissionTest extends TestCase
             ->assertRedirect(route('admin.dashboard'));
     }
 
+    public function test_super_admin_can_view_dashboard_with_reporting_data(): void
+    {
+        $admin = Admin::where('email', 'admin@wlu-clinic.local')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('ภาพรวมคลินิกของคุณ');
+    }
+
     public function test_guest_can_open_admin_login_page(): void
     {
         $this->get(route('admin.login'))
