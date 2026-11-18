@@ -15,8 +15,8 @@ class SettingsController extends Controller
     public function edit(): View
     {
         return view('admin.settings.edit', [
-            'siteLogo' => Setting::get('site_logo'),
-            'siteHeader' => Setting::get('site_header_image'),
+            'siteLogo' => Setting::assetPath('site_logo'),
+            'siteHeader' => Setting::assetPath('site_header_image'),
             'siteHeaderLink' => Setting::get('site_header_link'),
             'settings' => Setting::query()->get()->keyBy('key'),
         ]);

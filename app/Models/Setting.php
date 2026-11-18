@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class Setting extends Model
 {
@@ -39,6 +40,21 @@ class Setting extends Model
             ->all());
 
         return array_key_exists($key, $settings) ? $settings[$key] : $default;
+    }
+
+    /**
+     * Return a public asset path only when the stored file still exists.
+     *
+     * Render's free filesystem can be reset independently of the database,
+     * so stale paths must fall back to the built-in placeholder UI.
+     */
+    public static function assetPath(string $key): ?string
+    {
+        $path = self::get($key);
+
+        return is_string($path) && $path !== '' && Storage::disk('public')->exists($path)
+            ? $path
+            : null;
     }
 
     /**

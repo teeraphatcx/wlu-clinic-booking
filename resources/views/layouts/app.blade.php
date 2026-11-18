@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
-@php($siteLogo = \App\Models\Setting::get('site_logo'))
-@php($siteHeader = \App\Models\Setting::get('site_header_image'))
+@php($siteLogo = \App\Models\Setting::assetPath('site_logo'))
+@php($siteHeader = \App\Models\Setting::assetPath('site_header_image'))
 @php($siteHeaderLink = \App\Models\Setting::get('site_header_link'))
 @php($clinicName = \App\Models\Setting::get('clinic_name_th', 'คลินิกแพทย์แผนไทย'))
 @php($hospitalName = \App\Models\Setting::get('hospital_name', 'โรงพยาบาลศูนย์การแพทย์ มหาวิทยาลัยวลัยลักษณ์'))

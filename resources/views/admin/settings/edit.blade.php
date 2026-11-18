@@ -75,7 +75,7 @@
             </div>
 
             @php
-                $siteHeader = \App\Models\Setting::get('site_header_image');
+                $siteHeader = \App\Models\Setting::assetPath('site_header_image');
                 $siteHeaderLink = \App\Models\Setting::get('site_header_link');
             @endphp
 

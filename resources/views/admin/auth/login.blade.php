@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    @php($siteLogo = \App\Models\Setting::get('site_logo'))
+    @php($siteLogo = \App\Models\Setting::assetPath('site_logo'))
     @if($siteLogo)<link rel="icon" href="{{ asset('storage/'.$siteLogo) }}">@endif
     <title>เข้าสู่ระบบเจ้าหน้าที่ | คลินิกแพทย์แผนไทย ม.วลัยลักษณ์</title>
 

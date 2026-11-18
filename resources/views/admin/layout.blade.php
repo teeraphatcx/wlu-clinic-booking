@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     @php
-        $siteLogo = \App\Models\Setting::get('site_logo');
+        $siteLogo = \App\Models\Setting::assetPath('site_logo');
         $adminClinicName = \App\Models\Setting::get('clinic_name_th', 'คลินิกแพทย์แผนไทย');
     @endphp
     <meta charset="utf-8">
